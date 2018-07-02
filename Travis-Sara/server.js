@@ -48,26 +48,25 @@ app.post('/articles', (request, response) => {
   // DONE
   // TODO: In the provided array, add the author and author_url as data for the SQL query.
   // DONE
-  let SQL = `INSERT INTO authors (author, author_url) VALUES ($1 $2) ON CONFLICT DO NOTHING`;
-  let values = [request.body.author, request.body.authorUrl ];
+  let SQL = 'INSERT INTO authors(author, author_url) VALUES($1, $2) ON CONFLICT DO NOTHING';
+  let values = [request.body.author, request.body.author_url];
   client.query(SQL, values,
     function(err) {
-      if (err) console.error(err);
-      // REVIEW: This is our second query, to be executed when this first query is complete.
-      queryTwo();
+      if (err) console.error(err)
+      queryTwo()
     }
-  )
+  )  
 
   function queryTwo() {
     // TODO: Write a SQL query to retrieve the author_id from the authors table for the new article.
     //Done
     // TODO: In the provided array, add the author name as data for the SQL query.
     //Done
-    let SQL = 'SELECT author_id FROM authors WHERE author=$1';
-    let values = [request.body.author, request.body.author_url];
+    let SQL = `SELECT author_id FROM authors WHERE author=$1`;
+    let values = [request.body.author];
     client.query(SQL, values,
       function(err, result) {
-        if (err) console.error(err);
+        if (err) console.error(err)
 
         // REVIEW: This is our third query, to be executed when the second is complete. We are also passing the author_id into our third query.
         queryThree(result.rows[0].author_id);
@@ -80,15 +79,25 @@ app.post('/articles', (request, response) => {
     //Done
     // TODO: In the provided array, add the data from our new article, including the author_id, as data for the SQL query.
     //Done
-    let SQL = 'INSERT INTO articles(author_id, title, category, published_on, body VALUES ($1, $2, $3, $4, $5)';
-    let values = [author_id, request.body.title, request.body.category, request.body.published_on, request.body.body];
-    client.query(SQL, values,
-      function(err) {
-        if (err) console.error(err);
-        response.send('insert complete');
-      }
-    );
-  }
+    let SQL = `
+    INSERT INTO articles(author_id, title, category, published_on, body)
+    VALUES ($1, $2, $3, $4, $5);
+  `;
+  let values = [
+    author_id,
+    request.body.title,
+    request.body.category,
+    request.body.published_on,
+    request.body.body
+  ];
+
+  client.query(SQL, values,
+    function(err) {
+      if (err) console.error(err);
+      response.send('insert complete');
+    }
+  );
+}
 });
 
 app.put('/articles/:id', function(request, response) {
@@ -96,31 +105,36 @@ app.put('/articles/:id', function(request, response) {
   //DONE
   // TODO: In the provided array, add the required values from the request as data for the SQL query to interpolate.
   //DONE
-  let SQL = 'UPDATE authors SET author=$1, author_url=$2 WHERE author_id=$3';
-  let values = [request.bodies.author, request.body.author_url, request.body.author_id];
-  client.query(SQL, values)
-    .then(() => {
+  app.put('/articles/:id', (request, response) => {
+    let SQL = `
+      UPDATE authors
+      SET author=$1, author_url=$2
+      WHERE author_id=$3
+    `;
+    let values = [request.body.author, request.body.author_url, request.body.author_id];
+    client.query(SQL, values)
+      .then(() => {
       // TODO: Write a SQL query to update an article record. Keep in mind that article records now have an author_id, in addition to title, category, published_on, and body.
       //DONE
       // TODO: In the provided array, add the required values from the request as data for the SQL query to interpolate.
       //DONE
-      let SQL = `UPDATE articles
-      SET author_id=$1, title=$2, category=$3, published_on=$4 body=$5 WHERE article_id=$6
+      let SQL = `
+      UPDATE articles
+      SET author_id=$1, title=$2, category=$3, published_on=$4, body=$5
+      WHERE article_id=$6
     `;
-      let values = [request.body.author_id,
-        request.body.title,
-        request.body.category,
-        request.body.published_on,
-        request.body.body,
-        request.params.id];
-      client.query(SQL, values)
-    })
-    .then(() => {
-      response.send('Update complete');
-    })
-    .catch(err => {
-      console.error(err);
-    })
+    let values = [
+      request.body.author_id,
+      request.body.title,
+      request.body.category,
+      request.body.published_on,
+      request.body.body,
+      request.params.id
+    ];
+    client.query(SQL, values);
+  })
+  .then(() => response.send('Update complete'))
+  .catch(console.error);
 });
 
 app.delete('/articles/:id', (request, response) => {
